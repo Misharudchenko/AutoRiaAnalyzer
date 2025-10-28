@@ -10,11 +10,15 @@ using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Net.Http;
 using Newtonsoft.Json;
-using System.Net; // Для HttpStatusCode
+using System.Net;
+using System.IO;
+using System.Globalization; // Для CultureInfo
 
 namespace AutoRiaAnalyzer
 {
-    // --- ОСНОВНОЙ КЛАСС ФОРМЫ ---
+    // Вспомогательные классы (AutoInfoData, PhotoData, CarEntry и т.д.) 
+    // ДОЛЖНЫ БЫТЬ ВЫНЕСЕНЫ В ОТДЕЛЬНЫЙ ФАЙЛ ApiModels.cs.
+
     public partial class Form1 : Form
     {
         // ВАШИ КОНСТАНТЫ
@@ -25,21 +29,24 @@ namespace AutoRiaAnalyzer
 
         private readonly HttpClient client = new HttpClient();
 
+        // --- ПЕРЕМЕННЫЕ СОСТОЯНИЯ ---
+        private List<CarEntry> currentCarList = new List<CarEntry>();
+        private int currentAdvertIndex = -1;
+
         public Form1()
         {
             InitializeComponent();
-            _ = LoadInitialDataAsync();
-        }
+            cbEngineVolumeFrom.Text = "Объем от (л.)";
+            cbEngineVolumeTo.Text = "Объем до (л.)";
 
-        private void chart1_Click(object sender, EventArgs e)
-        {
-            // Ваш существующий метод
+            _ = LoadInitialDataAsync();
         }
 
         private async Task LoadInitialDataAsync()
         {
             LoadCarYears();
             LoadFuelTypes();
+            LoadEngineVolumes();
             await LoadBrandsAsync();
         }
 
@@ -56,9 +63,6 @@ namespace AutoRiaAnalyzer
                 cbYearFrom.Items.Add(year);
                 cbYearTo.Items.Add(year);
             }
-
-            // Установка дефолтных значений: 
-            // Год ДО: Текущий год; Год С: Текущий год - 1 (узкий диапазон)
 
             int defaultYearTo = currentYear;
             int defaultYearFrom = currentYear - 1;
@@ -81,7 +85,7 @@ namespace AutoRiaAnalyzer
                 { "Бензин", 1 },
                 { "Дизель", 2 },
                 { "Газ", 3 },
-                { "Газ/Бензин", 4 },
+                { "Газ/Бенсин", 4 },
                 { "Гибрид", 5 },
                 { "Электро", 6 }
             };
@@ -95,7 +99,23 @@ namespace AutoRiaAnalyzer
                 cbFuelType.SelectedIndex = 0;
         }
 
-        // --- МЕТОДЫ ДЛЯ РАБОТЫ С API ---
+        private void LoadEngineVolumes()
+        {
+            cbEngineVolumeFrom.Items.Clear();
+            cbEngineVolumeTo.Items.Clear();
+
+            for (double volume = 0.5; volume <= 7.0; volume += 0.1)
+            {
+                string volStr = volume.ToString("F1", CultureInfo.InvariantCulture);
+                cbEngineVolumeFrom.Items.Add(volStr);
+                cbEngineVolumeTo.Items.Add(volStr);
+            }
+
+            cbEngineVolumeFrom.SelectedItem = "1.0";
+            cbEngineVolumeTo.SelectedItem = "3.0";
+        }
+
+        // --- МЕТОДЫ API ---
 
         private async Task<T> FetchApiData<T>(string url)
         {
@@ -127,7 +147,7 @@ namespace AutoRiaAnalyzer
             {
                 cbBrand.Items.AddRange(brands.Where(b => b.Id > 0).ToArray());
                 cbBrand.Text = "Выбор марки авто";
-                if (brands.Count > 0)
+                if (cbBrand.Items.Count > 0)
                     cbBrand.SelectedIndex = 0;
             }
             else
@@ -141,13 +161,11 @@ namespace AutoRiaAnalyzer
             cbModel.Items.Clear();
             cbModel.Text = "Загрузка моделей...";
 
-            // Используем стандартный эндпоинт для получения списка моделей
             string url = $"{BASE_URL}/categories/{CATEGORY_ID}/marks/{markId}/models?api_key={API_KEY}";
             var models = await FetchApiData<List<ApiItem>>(url);
 
             if (models != null)
             {
-                // Отфильтровываем элементы с ID = 0 и с пустым именем
                 cbModel.Items.AddRange(models.Where(m => m.Id > 0 && !string.IsNullOrEmpty(m.Name)).ToArray());
                 cbModel.Text = "Выбор модели";
                 if (cbModel.Items.Count > 0)
@@ -159,43 +177,35 @@ namespace AutoRiaAnalyzer
             }
         }
 
-        // --- ГЛАВНЫЙ МЕТОД ПОЛУЧЕНИЯ СТАТИСТИКИ ЦЕН (ИСПОЛЬЗУЕМ GET) ---
-
-        private async Task<PriceStatistics> GetPricesFromApi(int markId, int modelId, int yearFrom, int yearTo, int fuelId)
+        private async Task<PriceStatistics> GetPricesFromApi(int markId, int modelId, int yearFrom, int yearTo, int fuelId, double volFrom, double volTo)
         {
-            // Используем GET метод average_price
             StringBuilder urlBuilder = new StringBuilder();
             urlBuilder.Append($"{BASE_URL}/average_price?api_key={API_KEY}");
 
             urlBuilder.Append($"&marka_id={markId}");
             urlBuilder.Append($"&model_id={modelId}");
 
-            // Диапазон годов: yers=от&yers=до (повторение параметра)
             urlBuilder.Append($"&yers={yearFrom}");
             urlBuilder.Append($"&yers={yearTo}");
 
-            // Тип топлива: fuel_id=ID
             urlBuilder.Append($"&fuel_id={fuelId}");
 
-            string url = urlBuilder.ToString();
+            urlBuilder.Append($"&engineVolumeFrom={volFrom.ToString(CultureInfo.InvariantCulture)}");
+            urlBuilder.Append($"&engineVolumeTo={volTo.ToString(CultureInfo.InvariantCulture)}");
 
-            // --- ОТЛАДОЧНЫЙ ВЫВОД ---
-            MessageBox.Show($"URL (GET): {url}",
-                            "Сформированный GET запрос к AUTO.RIA API (Для отладки)",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-            // --- КОНЕЦ ОТЛАДОЧНОГО ВЫВОДА ---
+            urlBuilder.Append($"&with_photo=1");
+
+            string url = urlBuilder.ToString();
 
             try
             {
                 HttpResponseMessage response = await client.GetAsync(url);
 
-                // Обработка случая "Not Enough Data", который часто возвращает 400 Bad Request
                 if (response.StatusCode == HttpStatusCode.BadRequest)
                 {
                     string errorBody = await response.Content.ReadAsStringAsync();
                     if (errorBody.Contains("Not Enough Data"))
                     {
-                        // Возвращаем null, чтобы отобразить сообщение "Данные не найдены"
                         return null;
                     }
                 }
@@ -204,7 +214,6 @@ namespace AutoRiaAnalyzer
 
                 string responseBody = await response.Content.ReadAsStringAsync();
 
-                // Десериализация в наш класс статистики
                 var result = JsonConvert.DeserializeObject<PriceStatistics>(responseBody);
                 return result;
             }
@@ -215,19 +224,136 @@ namespace AutoRiaAnalyzer
             }
         }
 
+        // --- МЕТОДЫ ДЛЯ ЗАГРУЗКИ ФОТО И АНАЛИЗА ЦЕНЫ ---
+
+        private async Task<AutoInfoData> GetAdvertDetails(int advertId)
+        {
+            string url = $"{BASE_URL}/info?api_key={API_KEY}&auto_id={advertId}";
+
+            try
+            {
+                HttpResponseMessage response = await client.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                var resultList = JsonConvert.DeserializeObject<List<AutoInfoData>>(responseBody);
+                return resultList?.FirstOrDefault();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void DisplayAdvert(double avgPrice)
+        {
+            if (currentCarList == null || currentCarList.Count == 0 || currentAdvertIndex < 0 || currentAdvertIndex >= currentCarList.Count)
+            {
+                pbCarPhoto.Image = null;
+                lblPhotoStats.Text = "Нет данных для отображения.";
+                return;
+            }
+
+            CarEntry entry = currentCarList[currentAdvertIndex];
+
+            string priceStatus = AnalyzePrice(entry.Price, avgPrice);
+
+            lblPhotoStats.Text = $"ID: {entry.AdvertId}\r\nЦена: {entry.Price:N0} $\r\nСтатус: {priceStatus}\r\nОбъявление {currentAdvertIndex + 1} из {currentCarList.Count}";
+
+            _ = LoadPhoto(entry.AdvertId);
+        }
+
+        private async Task LoadPhoto(int advertId)
+        {
+            pbCarPhoto.Image = null;
+
+            AutoInfoData details = await GetAdvertDetails(advertId);
+
+            // Каскадный поиск ссылки: SeoLinkF (самая большая) -> SeoLinkB -> SeoLinkM
+            string photoUrl = details?.PhotoData?.SeoLinkF ??
+                              details?.PhotoData?.SeoLinkB ??
+                              details?.PhotoData?.SeoLinkM ?? "";
+
+            if (string.IsNullOrEmpty(photoUrl))
+            {
+                lblPhotoStats.Text += "\r\nФото недоступно (Нет ссылки в API).";
+                return;
+            }
+
+            // ПРОВЕРКА: Если ссылка протоколо-относительная, делаем ее абсолютной
+            if (photoUrl.StartsWith("//"))
+            {
+                photoUrl = "https:" + photoUrl;
+            }
+
+            // --- НОВОЕ: ВЫВОДИМ ССЫЛКУ В ОКНО СООБЩЕНИЯ ДЛЯ ПРОВЕРКИ ---
+            MessageBox.Show(
+                $"URL для загрузки фото:\n{photoUrl}",
+                "Отладка загрузки фото: Проверьте ссылку в браузере",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            // --- КОНЕЦ НОВОГО ---
+
+            // Загрузка
+            try
+            {
+                using (var stream = await client.GetStreamAsync(photoUrl))
+                {
+                    pbCarPhoto.Image = Image.FromStream(stream);
+                }
+            }
+            catch (HttpRequestException ex) when (ex.Message.Contains("404"))
+            {
+                lblPhotoStats.Text += "\r\nФото удалено (404 Not Found).";
+                pbCarPhoto.Image = null;
+            }
+            catch (Exception)
+            {
+                string shortUrl = photoUrl.Length > 60 ? photoUrl.Substring(0, 60) + "..." : photoUrl;
+                lblPhotoStats.Text += $"\r\nОшибка загрузки фото. URL: {shortUrl}";
+                pbCarPhoto.Image = null;
+            }
+        }
+
+        private string AnalyzePrice(int currentPrice, double avgPrice)
+        {
+            if (avgPrice == 0) return "Нет статистики";
+
+            double deviation = (double)currentPrice / avgPrice;
+
+            if (deviation > 1.1)
+            {
+                return "❌ Завышена";
+            }
+            else if (deviation < 0.9)
+            {
+                return "✅ Занижена";
+            }
+            else
+            {
+                return "⚖️ Средняя";
+            }
+        }
+
 
         // --- ОБНОВЛЕНИЕ ГРАФИКА И ТАБЛИЦЫ ---
+
         private async void UpdateChartAndGrid()
         {
             if (!(cbBrand.SelectedItem is ApiItem selectedBrand) ||
                 !(cbModel.SelectedItem is ApiItem selectedModel) ||
                 !(cbFuelType.SelectedItem is ApiItem selectedFuelType) ||
                 !(cbYearFrom.SelectedItem is int yearFrom) ||
-                !(cbYearTo.SelectedItem is int yearTo))
+                !(cbYearTo.SelectedItem is int yearTo) ||
+                !(cbEngineVolumeFrom.SelectedItem is string volFromStr) ||
+                !(cbEngineVolumeTo.SelectedItem is string volToStr))
             {
-                lblStats.Text = "Выберите марку, модель, диапазон годов и топливо.";
+                lblStats.Text = "Заполните все фильтры.";
                 return;
             }
+
+            double volFrom = double.Parse(volFromStr, CultureInfo.InvariantCulture);
+            double volTo = double.Parse(volToStr, CultureInfo.InvariantCulture);
 
             int markId = selectedBrand.Id;
             int modelId = selectedModel.Id;
@@ -236,60 +362,89 @@ namespace AutoRiaAnalyzer
             string modelName = selectedModel.Name;
             string fuelName = selectedFuelType.Name;
 
-            if (yearFrom > yearTo)
+            if (yearFrom > yearTo || volFrom > volTo)
             {
-                MessageBox.Show("Начальный год (Год с) не может быть больше конечного года (Год до).", "Ошибка ввода", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Начальное значение фильтра не может быть больше конечного.", "Ошибка ввода", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             lblStats.Text = "Загрузка данных с AUTO.RIA...";
 
-            PriceStatistics stats = await GetPricesFromApi(markId, modelId, yearFrom, yearTo, fuelId);
+            PriceStatistics stats = await GetPricesFromApi(markId, modelId, yearFrom, yearTo, fuelId, volFrom, volTo);
 
             if (stats == null || stats.prices == null || stats.prices.Count == 0)
             {
-                // Выводим ID модели, чтобы пользователю было проще отладить
-                lblStats.Text = $"Средняя цена:\r\nДанные по {brandName} {modelName} ({yearFrom}-{yearTo}, {fuelName}) не найдены.\r\n(ID модели: {modelId})";
+                lblStats.Text = $"Средняя цена:\r\nДанные по {brandName} {modelName} ({yearFrom}-{yearTo}, {fuelName}, {volFrom}-{volTo}л) не найдены.\r\n(ID модели: {modelId})";
                 dataGridCars.DataSource = null;
                 chartCars.Series.Clear();
+                currentCarList.Clear();
                 return;
             }
 
-            // --- Обновление DataGrid ---
-            List<CarEntry> gridData = new List<CarEntry>();
-            foreach (var price in stats.prices)
+            currentCarList.Clear();
+            double avg = stats.arithmeticMean;
+
+            for (int i = 0; i < stats.prices.Count; i++)
             {
-                gridData.Add(new CarEntry
+                currentCarList.Add(new CarEntry
                 {
+                    AdvertId = stats.classifieds[i],
                     Brand = brandName,
                     Model = modelName,
                     YearRange = $"{yearFrom}-{yearTo}",
                     FuelType = fuelName,
-                    Price = (int)Math.Round(price)
+                    Price = (int)Math.Round(stats.prices[i]),
+                    AvgPrice = avg
                 });
             }
-            dataGridCars.DataSource = gridData;
+
+            currentCarList = currentCarList.OrderBy(e => e.Price).ToList();
+            dataGridCars.DataSource = currentCarList;
 
             // --- Обновление Chart ---
             chartCars.Series.Clear();
-            var series = new Series($"{brandName} {modelName} ({yearFrom}-{yearTo}, {fuelName})")
+
+            var pricesSeries = new Series("Цены объявлений")
             {
                 ChartType = SeriesChartType.Column,
                 Color = System.Drawing.Color.SteelBlue
             };
+            int k = 1;
+            foreach (var entry in currentCarList)
+                pricesSeries.Points.AddXY($"Объявление {k++}", entry.Price);
 
-            int j = 1;
-            foreach (var price in stats.prices.OrderBy(p => p))
-                series.Points.AddXY($"Объявление {j++}", price);
+            var avgSeries = new Series("Средняя цена")
+            {
+                ChartType = SeriesChartType.Line,
+                BorderWidth = 3,
+                Color = System.Drawing.Color.Red,
+                MarkerStyle = MarkerStyle.None
+            };
+            for (int i = 0; i < pricesSeries.Points.Count; i++)
+                avgSeries.Points.AddXY(pricesSeries.Points[i].AxisLabel, avg);
 
-            chartCars.Series.Add(series);
+            chartCars.Series.Add(pricesSeries);
+            chartCars.Series.Add(avgSeries);
 
-            // --- Обновление Stats Label ---
-            double avg = stats.arithmeticMean;
+            chartCars.ChartAreas[0].AxisX.Title = "Объявления (от дешевых к дорогим)";
+            chartCars.ChartAreas[0].AxisY.Title = "Цена ($)";
+
+            // --- Сброс индикатора загрузки и установка статистики ---
             double min = stats.prices.Min();
             double max = stats.prices.Max();
-
             lblStats.Text = $"Средняя цена: {avg:F0} $\r\nДиапазон: {min:F0} – {max:F0} $\r\nКоличество объявлений: {stats.prices.Count}\r\nГрафик цен →";
+
+            // Автоматический выбор первого элемента
+            if (currentCarList.Count > 0)
+            {
+                dataGridCars.Rows[0].Selected = true;
+                dataGridCars_CellClick(dataGridCars, new DataGridViewCellEventArgs(0, 0));
+            }
+            else
+            {
+                pbCarPhoto.Image = null;
+                lblPhotoStats.Text = "Нет объявлений.";
+            }
         }
 
 
@@ -306,6 +461,41 @@ namespace AutoRiaAnalyzer
         private void btnUpdate_Click(object sender, EventArgs e)
         {
             UpdateChartAndGrid();
+        }
+
+        private void dataGridCars_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                currentAdvertIndex = e.RowIndex;
+                if (currentCarList.Count > currentAdvertIndex)
+                {
+                    CarEntry selectedEntry = currentCarList[currentAdvertIndex];
+                    DisplayAdvert(selectedEntry.AvgPrice);
+                }
+            }
+        }
+
+        private void btnPrev_Click(object sender, EventArgs e)
+        {
+            if (currentCarList.Count > 0 && currentAdvertIndex > 0)
+            {
+                currentAdvertIndex--;
+                dataGridCars.Rows[currentAdvertIndex].Selected = true;
+                dataGridCars.FirstDisplayedScrollingRowIndex = currentAdvertIndex;
+                DisplayAdvert(currentCarList[currentAdvertIndex].AvgPrice);
+            }
+        }
+
+        private void btnNext_Click(object sender, EventArgs e)
+        {
+            if (currentCarList.Count > 0 && currentAdvertIndex < currentCarList.Count - 1)
+            {
+                currentAdvertIndex++;
+                dataGridCars.Rows[currentAdvertIndex].Selected = true;
+                dataGridCars.FirstDisplayedScrollingRowIndex = currentAdvertIndex;
+                DisplayAdvert(currentCarList[currentAdvertIndex].AvgPrice);
+            }
         }
     }
 }
