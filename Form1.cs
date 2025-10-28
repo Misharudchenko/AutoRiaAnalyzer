@@ -12,11 +12,11 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using System.Net;
 using System.IO;
-using System.Globalization; // Для CultureInfo
+using System.Globalization;
 
 namespace AutoRiaAnalyzer
 {
-    // Вспомогательные классы (AutoInfoData, PhotoData, CarEntry и т.д.) 
+    // Вспомогательные классы (AutoInfoData, PhotoData, CarEntry и т.д.)
     // ДОЛЖНЫ БЫТЬ ВЫНЕСЕНЫ В ОТДЕЛЬНЫЙ ФАЙЛ ApiModels.cs.
 
     public partial class Form1 : Form
@@ -82,7 +82,7 @@ namespace AutoRiaAnalyzer
         {
             var fuelTypes = new Dictionary<string, int>
             {
-                { "Бензин", 1 },
+                { "Бенсин", 1 },
                 { "Дизель", 2 },
                 { "Газ", 3 },
                 { "Газ/Бенсин", 4 },
@@ -115,7 +115,7 @@ namespace AutoRiaAnalyzer
             cbEngineVolumeTo.SelectedItem = "3.0";
         }
 
-        // --- МЕТОДЫ API ---
+        // --- МЕТОДЫ API (FetchApiData, LoadBrandsAsync, LoadModelsAsync) ---
 
         private async Task<T> FetchApiData<T>(string url)
         {
@@ -274,9 +274,11 @@ namespace AutoRiaAnalyzer
                               details?.PhotoData?.SeoLinkB ??
                               details?.PhotoData?.SeoLinkM ?? "";
 
+            string currentStatusText = lblPhotoStats.Text;
+
             if (string.IsNullOrEmpty(photoUrl))
             {
-                lblPhotoStats.Text += "\r\nФото недоступно (Нет ссылки в API).";
+                lblPhotoStats.Text = currentStatusText + "\r\nФото недоступно (Ссылка отсутствует в API).";
                 return;
             }
 
@@ -286,35 +288,38 @@ namespace AutoRiaAnalyzer
                 photoUrl = "https:" + photoUrl;
             }
 
-            // --- НОВОЕ: ВЫВОДИМ ССЫЛКУ В ОКНО СООБЩЕНИЯ ДЛЯ ПРОВЕРКИ ---
-            MessageBox.Show(
-                $"URL для загрузки фото:\n{photoUrl}",
-                "Отладка загрузки фото: Проверьте ссылку в браузере",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-            // --- КОНЕЦ НОВОГО ---
-
             // Загрузка
             try
             {
                 using (var stream = await client.GetStreamAsync(photoUrl))
                 {
-                    pbCarPhoto.Image = Image.FromStream(stream);
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        await stream.CopyToAsync(ms);
+                        ms.Position = 0; // Rewind the stream
+
+                        Image originalImage = Image.FromStream(ms);
+                        pbCarPhoto.Image = new Bitmap(originalImage);
+                        originalImage.Dispose();
+                    }
                 }
             }
             catch (HttpRequestException ex) when (ex.Message.Contains("404"))
             {
-                lblPhotoStats.Text += "\r\nФото удалено (404 Not Found).";
+                lblPhotoStats.Text = currentStatusText + $"\r\nФото удалено (404 Not Found).";
                 pbCarPhoto.Image = null;
             }
-            catch (Exception)
+            catch (Exception ex) // --- ИЗМЕНЕНИЕ: ВЫВОД ПОЛНОГО ИСКЛЮЧЕНИЯ ---
             {
-                string shortUrl = photoUrl.Length > 60 ? photoUrl.Substring(0, 60) + "..." : photoUrl;
-                lblPhotoStats.Text += $"\r\nОшибка загрузки фото. URL: {shortUrl}";
+                lblPhotoStats.Text = currentStatusText + $"\r\nОшибка загрузки фото.";
                 pbCarPhoto.Image = null;
+                // Показываем детальную информацию об ошибке
+                MessageBox.Show($"Ошибка при загрузке или обработке фото:\n{ex.ToString()}\n\nURL: {photoUrl}",
+                                "Ошибка Загрузки Изображения", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
+        // --- МЕТОД: AnalyzePrice ---
         private string AnalyzePrice(int currentPrice, double avgPrice)
         {
             if (avgPrice == 0) return "Нет статистики";
@@ -336,7 +341,7 @@ namespace AutoRiaAnalyzer
         }
 
 
-        // --- ОБНОВЛЕНИЕ ГРАФИКА И ТАБЛИЦЫ ---
+        // --- МЕТОД: UpdateChartAndGrid ---
 
         private async void UpdateChartAndGrid()
         {
@@ -496,6 +501,11 @@ namespace AutoRiaAnalyzer
                 dataGridCars.FirstDisplayedScrollingRowIndex = currentAdvertIndex;
                 DisplayAdvert(currentCarList[currentAdvertIndex].AvgPrice);
             }
+        }
+
+        private void chart1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
