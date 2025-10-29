@@ -27,23 +27,35 @@ namespace AutoRiaAnalyzer
 
     // --- 3. Классы для информации об объявлении (/info) ---
 
+    // ИСПРАВЛЕНО: Это главный класс, который соответствует плоскому JSON-объекту,
+    // который возвращает API (а не массив)
     public class AutoInfoData
     {
         [JsonProperty("autoData")]
         public AutoData AutoData { get; set; }
+
         [JsonProperty("photoData")]
         public PhotoData PhotoData { get; set; }
+
         [JsonProperty("USD")]
         public int USD { get; set; }
-        // Добавьте сюда другие поля, если они понадобятся, например, "linkToView"
+
+        [JsonProperty("markId")]
+        public int MarkId { get; set; }
+
+        [JsonProperty("modelId")]
+        public int ModelId { get; set; }
     }
 
     public class AutoData
     {
-        public int year { get; set; }
+        [JsonProperty("year")]
+        public int Year { get; set; }
+        [JsonProperty("autoId")]
+        public int AutoId { get; set; }
     }
 
-    // ИСПРАВЛЕНО: Добавлены SeoLinkB и SeoLinkF
+    // Содержит все поля для каскадной загрузки
     public class PhotoData
     {
         [JsonProperty("seoLinkM")]
@@ -52,7 +64,6 @@ namespace AutoRiaAnalyzer
         public string SeoLinkB { get; set; }
         [JsonProperty("seoLinkF")]
         public string SeoLinkF { get; set; }
-        // Добавьте сюда другие поля, если они понадобятся, например, "seoLinkSX"
     }
 
     // --- 4. Класс для DataGridView ---

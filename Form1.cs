@@ -13,14 +13,17 @@ using Newtonsoft.Json;
 using System.Net;
 using System.IO;
 using System.Globalization;
+using System.Diagnostics;
 
 namespace AutoRiaAnalyzer
 {
-    // Вспомогательные классы (AutoInfoData, PhotoData, CarEntry и т.д.)
+    // Вспомогательные классы (AutoInfoData, PhotoData, CarEntry и т.д.) 
     // ДОЛЖНЫ БЫТЬ ВЫНЕСЕНЫ В ОТДЕЛЬНЫЙ ФАЙЛ ApiModels.cs.
 
     public partial class Form1 : Form
     {
+        // ... (Константы, Поля, Конструктор, LoadInitialDataAsync, Заполнение ComboBox'ов, API методы (Fetch, Brands, Models)) ...
+
         // ВАШИ КОНСТАНТЫ
         private const string API_KEY = "CWM2k01NieocZCUVYWzakTO2MGTfB6gE5JlD7t1h";
         private const int USER_ID = 11469251;
@@ -236,11 +239,20 @@ namespace AutoRiaAnalyzer
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
 
-                var resultList = JsonConvert.DeserializeObject<List<AutoInfoData>>(responseBody);
-                return resultList?.FirstOrDefault();
+                // ИСПРАВЛЕНО: Десериализуем как ОДИН ОБЪЕКТ (AutoInfoData), а не List<AutoInfoData>
+                var result = JsonConvert.DeserializeObject<AutoInfoData>(responseBody);
+                return result;
             }
-            catch
+            catch (JsonSerializationException jsonEx)
             {
+                // Если API *иногда* возвращает массив, а иногда объект, мы должны обработать это
+                // (Но исходя из вашей отладки, он возвращает ОБЪЕКТ, который не смог стать List)
+                Debug.WriteLine($"JsonSerializationException в GetAdvertDetails: {jsonEx.Message}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Общая ошибка в GetAdvertDetails: {ex.Message}");
                 return null;
             }
         }
@@ -309,13 +321,11 @@ namespace AutoRiaAnalyzer
                 lblPhotoStats.Text = currentStatusText + $"\r\nФото удалено (404 Not Found).";
                 pbCarPhoto.Image = null;
             }
-            catch (Exception ex) // --- ИЗМЕНЕНИЕ: ВЫВОД ПОЛНОГО ИСКЛЮЧЕНИЯ ---
+            catch (Exception ex)
             {
                 lblPhotoStats.Text = currentStatusText + $"\r\nОшибка загрузки фото.";
                 pbCarPhoto.Image = null;
-                // Показываем детальную информацию об ошибке
-                MessageBox.Show($"Ошибка при загрузке или обработке фото:\n{ex.ToString()}\n\nURL: {photoUrl}",
-                                "Ошибка Загрузки Изображения", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Debug.WriteLine($"Ошибка GDI+ или MemoryStream: {ex.ToString()}");
             }
         }
 
