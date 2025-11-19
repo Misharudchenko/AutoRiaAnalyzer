@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend4 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.lblTitle = new System.Windows.Forms.Label();
             this.cbBrand = new System.Windows.Forms.ComboBox();
             this.cbModel = new System.Windows.Forms.ComboBox();
@@ -63,9 +63,9 @@
             this.lblTitle.ForeColor = System.Drawing.Color.Navy;
             this.lblTitle.Location = new System.Drawing.Point(28, 21);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(297, 30);
+            this.lblTitle.Size = new System.Drawing.Size(283, 30);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Анализатор цен AUTO.RIA";
+            this.lblTitle.Text = "Аналізатор цін AUTO.RIA";
             // 
             // cbBrand
             // 
@@ -74,7 +74,7 @@
             this.cbBrand.Name = "cbBrand";
             this.cbBrand.Size = new System.Drawing.Size(121, 21);
             this.cbBrand.TabIndex = 1;
-            this.cbBrand.Text = "Выбор марки авто";
+            this.cbBrand.Text = "Вибір марки авто";
             this.cbBrand.SelectedIndexChanged += new System.EventHandler(this.cmbBrand_SelectedIndexChanged);
             // 
             // cbModel
@@ -84,7 +84,7 @@
             this.cbModel.Name = "cbModel";
             this.cbModel.Size = new System.Drawing.Size(121, 21);
             this.cbModel.TabIndex = 2;
-            this.cbModel.Text = "Выбор модели";
+            this.cbModel.Text = "Вибірр моделі";
             // 
             // btnLoad
             // 
@@ -95,7 +95,7 @@
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(121, 23);
             this.btnLoad.TabIndex = 8;
-            this.btnLoad.Text = "Загрузить данные";
+            this.btnLoad.Text = "Завантажити данні";
             this.btnLoad.UseVisualStyleBackColor = false;
             this.btnLoad.Click += new System.EventHandler(this.btnUpdate_Click);
             // 
@@ -125,23 +125,24 @@
             this.lblStats.ForeColor = System.Drawing.Color.DarkSlateBlue;
             this.lblStats.Location = new System.Drawing.Point(343, 101);
             this.lblStats.Name = "lblStats";
-            this.lblStats.Size = new System.Drawing.Size(167, 63);
+            this.lblStats.Size = new System.Drawing.Size(162, 63);
             this.lblStats.TabIndex = 10;
-            this.lblStats.Text = "Средняя цена:\r\nДиапазон: min–max\r\nГрафик цен →\r\n";
+            this.lblStats.Text = "Средня ціна:\r\nДіапазон: min–max\r\nГрафік цін →\r\n";
+            this.lblStats.Click += new System.EventHandler(this.lblStats_Click);
             // 
             // chartCars
             // 
             this.chartCars.BackColor = System.Drawing.Color.WhiteSmoke;
-            chartArea3.Name = "ChartArea1";
-            this.chartCars.ChartAreas.Add(chartArea3);
-            legend3.Name = "Legend1";
-            this.chartCars.Legends.Add(legend3);
+            chartArea4.Name = "ChartArea1";
+            this.chartCars.ChartAreas.Add(chartArea4);
+            legend4.Name = "Legend1";
+            this.chartCars.Legends.Add(legend4);
             this.chartCars.Location = new System.Drawing.Point(35, 305);
             this.chartCars.Name = "chartCars";
-            series3.ChartArea = "ChartArea1";
-            series3.Legend = "Legend1";
-            series3.Name = "Series1";
-            this.chartCars.Series.Add(series3);
+            series4.ChartArea = "ChartArea1";
+            series4.Legend = "Legend1";
+            series4.Name = "Series1";
+            this.chartCars.Series.Add(series4);
             this.chartCars.Size = new System.Drawing.Size(475, 289);
             this.chartCars.TabIndex = 11;
             this.chartCars.Text = "chart1";
@@ -153,7 +154,7 @@
             this.cbYearFrom.Name = "cbYearFrom";
             this.cbYearFrom.Size = new System.Drawing.Size(88, 21);
             this.cbYearFrom.TabIndex = 3;
-            this.cbYearFrom.Text = "С года";
+            this.cbYearFrom.Text = "Рік з";
             // 
             // cbFuelType
             // 
@@ -162,7 +163,8 @@
             this.cbFuelType.Name = "cbFuelType";
             this.cbFuelType.Size = new System.Drawing.Size(121, 21);
             this.cbFuelType.TabIndex = 7;
-            this.cbFuelType.Text = "Выбор топлива";
+            this.cbFuelType.Text = "Вибір палива";
+            this.cbFuelType.SelectedIndexChanged += new System.EventHandler(this.cbFuelType_SelectedIndexChanged);
             // 
             // cbYearTo
             // 
@@ -171,25 +173,25 @@
             this.cbYearTo.Name = "cbYearTo";
             this.cbYearTo.Size = new System.Drawing.Size(89, 21);
             this.cbYearTo.TabIndex = 4;
-            this.cbYearTo.Text = "По год";
+            this.cbYearTo.Text = "Рік до";
             // 
             // lblYearTo
             // 
             this.lblYearTo.AutoSize = true;
             this.lblYearTo.Location = new System.Drawing.Point(197, 107);
             this.lblYearTo.Name = "lblYearTo";
-            this.lblYearTo.Size = new System.Drawing.Size(43, 13);
+            this.lblYearTo.Size = new System.Drawing.Size(40, 13);
             this.lblYearTo.TabIndex = 10;
-            this.lblYearTo.Text = "Год до:";
+            this.lblYearTo.Text = "Рік до:";
             // 
             // lblYearFrom
             // 
             this.lblYearFrom.AutoSize = true;
             this.lblYearFrom.Location = new System.Drawing.Point(35, 107);
             this.lblYearFrom.Name = "lblYearFrom";
-            this.lblYearFrom.Size = new System.Drawing.Size(37, 13);
+            this.lblYearFrom.Size = new System.Drawing.Size(34, 13);
             this.lblYearFrom.TabIndex = 9;
-            this.lblYearFrom.Text = "Год с:";
+            this.lblYearFrom.Text = "Рік з:";
             // 
             // cbEngineVolumeFrom
             // 
@@ -198,7 +200,7 @@
             this.cbEngineVolumeFrom.Name = "cbEngineVolumeFrom";
             this.cbEngineVolumeFrom.Size = new System.Drawing.Size(74, 21);
             this.cbEngineVolumeFrom.TabIndex = 5;
-            this.cbEngineVolumeFrom.Text = "Объем от";
+            this.cbEngineVolumeFrom.Text = "Об\'єм з";
             // 
             // cbEngineVolumeTo
             // 
@@ -207,25 +209,25 @@
             this.cbEngineVolumeTo.Name = "cbEngineVolumeTo";
             this.cbEngineVolumeTo.Size = new System.Drawing.Size(78, 21);
             this.cbEngineVolumeTo.TabIndex = 6;
-            this.cbEngineVolumeTo.Text = "Объем до";
+            this.cbEngineVolumeTo.Text = "Об\'єм до";
             // 
             // lblEngineFrom
             // 
             this.lblEngineFrom.AutoSize = true;
             this.lblEngineFrom.Location = new System.Drawing.Point(35, 134);
             this.lblEngineFrom.Name = "lblEngineFrom";
-            this.lblEngineFrom.Size = new System.Drawing.Size(54, 13);
+            this.lblEngineFrom.Size = new System.Drawing.Size(49, 13);
             this.lblEngineFrom.TabIndex = 11;
-            this.lblEngineFrom.Text = "Объем с:";
+            this.lblEngineFrom.Text = "Об\'єм з:";
             // 
             // lblEngineTo
             // 
             this.lblEngineTo.AutoSize = true;
             this.lblEngineTo.Location = new System.Drawing.Point(197, 134);
             this.lblEngineTo.Name = "lblEngineTo";
-            this.lblEngineTo.Size = new System.Drawing.Size(60, 13);
+            this.lblEngineTo.Size = new System.Drawing.Size(55, 13);
             this.lblEngineTo.TabIndex = 12;
-            this.lblEngineTo.Text = "Объем до:";
+            this.lblEngineTo.Text = "Об\'єм до:";
             // 
             // pbCarPhoto
             // 
@@ -244,7 +246,7 @@
             this.btnPrev.Name = "btnPrev";
             this.btnPrev.Size = new System.Drawing.Size(141, 43);
             this.btnPrev.TabIndex = 13;
-            this.btnPrev.Text = "<< Предыдущее";
+            this.btnPrev.Text = "<< Минуле";
             this.btnPrev.UseVisualStyleBackColor = true;
             this.btnPrev.Click += new System.EventHandler(this.btnPrev_Click);
             // 
@@ -254,7 +256,7 @@
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(127, 43);
             this.btnNext.TabIndex = 14;
-            this.btnNext.Text = "Следующее >>";
+            this.btnNext.Text = "Наступне >>";
             this.btnNext.UseVisualStyleBackColor = true;
             this.btnNext.Click += new System.EventHandler(this.btnNext_Click);
             // 
@@ -267,7 +269,7 @@
             this.lblPhotoStats.Name = "lblPhotoStats";
             this.lblPhotoStats.Size = new System.Drawing.Size(200, 95);
             this.lblPhotoStats.TabIndex = 15;
-            this.lblPhotoStats.Text = "Цена: N/A\r\nСтатус: Ожидание выбора авто из таблицы.";
+            this.lblPhotoStats.Text = "Ціна: N/A\r\nСтатус: Очікування вибору авто з таблиці.";
             this.lblPhotoStats.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1

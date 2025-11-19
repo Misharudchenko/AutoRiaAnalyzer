@@ -17,20 +17,11 @@ using System.Diagnostics;
 
 namespace AutoRiaAnalyzer
 {
-    // Вспомогательные классы (AutoInfoData, PhotoData, CarEntry и т.д.) 
-    // ДОЛЖНЫ БЫТЬ ВЫНЕСЕНЫ В ОТДЕЛЬНЫЙ ФАЙЛ ApiModels.cs.
-
     public partial class Form1 : Form
     {
-        // ... (Константы, Поля, Конструктор, LoadInitialDataAsync, Заполнение ComboBox'ов, API методы (Fetch, Brands, Models)) ...
-
-        // ВАШИ КОНСТАНТЫ
-        private const string API_KEY = "CWM2k01NieocZCUVYWzakTO2MGTfB6gE5JlD7t1h";
-        private const int USER_ID = 11469251;
-        private const int CATEGORY_ID = 1;
-        private const string BASE_URL = "https://developers.ria.com/auto";
-
-        private readonly HttpClient client = new HttpClient();
+        // --- СЕРВІС ---
+        // Використовуємо сервіс для всієї логіки API та обчислень
+        private readonly AutoRiaService _service = new AutoRiaService();
 
         // --- ПЕРЕМЕННЫЕ СОСТОЯНИЯ ---
         private List<CarEntry> currentCarList = new List<CarEntry>();
@@ -39,8 +30,8 @@ namespace AutoRiaAnalyzer
         public Form1()
         {
             InitializeComponent();
-            cbEngineVolumeFrom.Text = "Объем от (л.)";
-            cbEngineVolumeTo.Text = "Объем до (л.)";
+            cbEngineVolumeFrom.Text = "Об'єм від (л.)";
+            cbEngineVolumeTo.Text = "Об'єм до (л.)";
 
             _ = LoadInitialDataAsync();
         }
@@ -53,7 +44,7 @@ namespace AutoRiaAnalyzer
             await LoadBrandsAsync();
         }
 
-        // --- МЕТОДЫ ДЛЯ ЗАПОЛНЕНИЯ COMBOBOX'ОВ ---
+        // --- МЕТОДЫ ДЛЯ ЗАПОЛНЕНИЯ COMBOBOX'ОВ (UI-Specific - Keep) ---
 
         private void LoadCarYears()
         {
@@ -85,12 +76,12 @@ namespace AutoRiaAnalyzer
         {
             var fuelTypes = new Dictionary<string, int>
             {
-                { "Бенсин", 1 },
+                { "Бензин", 1 },
                 { "Дизель", 2 },
                 { "Газ", 3 },
-                { "Газ/Бенсин", 4 },
-                { "Гибрид", 5 },
-                { "Электро", 6 }
+                { "Газ/Бензин", 4 },
+                { "Гібрид", 5 },
+                { "Єлектро", 6 }
             };
 
             cbFuelType.Items.Clear();
@@ -118,240 +109,107 @@ namespace AutoRiaAnalyzer
             cbEngineVolumeTo.SelectedItem = "3.0";
         }
 
-        // --- МЕТОДЫ API (FetchApiData, LoadBrandsAsync, LoadModelsAsync) ---
-
-        private async Task<T> FetchApiData<T>(string url)
-        {
-            try
-            {
-                HttpResponseMessage response = await client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                return JsonConvert.DeserializeObject<T>(responseBody);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при загрузке данных с API: {ex.Message}", "Ошибка API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return default;
-            }
-        }
+        // --- МЕТОДЫ API (Используют сервис) ---
 
         private async Task LoadBrandsAsync()
         {
             cbBrand.Items.Clear();
             cbModel.Items.Clear();
-            cbBrand.Text = "Загрузка марок...";
+            cbBrand.Text = "Завантаження марок...";
 
-            string url = $"{BASE_URL}/categories/{CATEGORY_ID}/marks?api_key={API_KEY}";
-            var brands = await FetchApiData<List<ApiItem>>(url);
-
-            if (brands != null)
+            try
             {
-                cbBrand.Items.AddRange(brands.Where(b => b.Id > 0).ToArray());
-                cbBrand.Text = "Выбор марки авто";
-                if (cbBrand.Items.Count > 0)
-                    cbBrand.SelectedIndex = 0;
+                var brands = await _service.LoadBrandsAsync();
+
+                if (brands != null)
+                {
+                    cbBrand.Items.AddRange(brands.Where(b => b.Id > 0).ToArray());
+                    cbBrand.Text = "Вибір марки авто";
+                    if (cbBrand.Items.Count > 0)
+                        cbBrand.SelectedIndex = 0;
+                }
+                else
+                {
+                    cbBrand.Text = "Помилка завантаження марок";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                cbBrand.Text = "Ошибка загрузки марок";
+                MessageBox.Show($"Помилка при завантаженні марок: {ex.Message}", "Помилка API", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                cbBrand.Text = "Помилка завантаження марок";
             }
         }
 
         private async Task LoadModelsAsync(int markId)
         {
             cbModel.Items.Clear();
-            cbModel.Text = "Загрузка моделей...";
-
-            string url = $"{BASE_URL}/categories/{CATEGORY_ID}/marks/{markId}/models?api_key={API_KEY}";
-            var models = await FetchApiData<List<ApiItem>>(url);
-
-            if (models != null)
-            {
-                cbModel.Items.AddRange(models.Where(m => m.Id > 0 && !string.IsNullOrEmpty(m.Name)).ToArray());
-                cbModel.Text = "Выбор модели";
-                if (cbModel.Items.Count > 0)
-                    cbModel.SelectedIndex = 0;
-            }
-            else
-            {
-                cbModel.Text = "Ошибка загрузки моделей";
-            }
-        }
-
-        private async Task<PriceStatistics> GetPricesFromApi(int markId, int modelId, int yearFrom, int yearTo, int fuelId, double volFrom, double volTo)
-        {
-            StringBuilder urlBuilder = new StringBuilder();
-            urlBuilder.Append($"{BASE_URL}/average_price?api_key={API_KEY}");
-
-            urlBuilder.Append($"&marka_id={markId}");
-            urlBuilder.Append($"&model_id={modelId}");
-
-            urlBuilder.Append($"&yers={yearFrom}");
-            urlBuilder.Append($"&yers={yearTo}");
-
-            urlBuilder.Append($"&fuel_id={fuelId}");
-
-            urlBuilder.Append($"&engineVolumeFrom={volFrom.ToString(CultureInfo.InvariantCulture)}");
-            urlBuilder.Append($"&engineVolumeTo={volTo.ToString(CultureInfo.InvariantCulture)}");
-
-            urlBuilder.Append($"&with_photo=1");
-
-            string url = urlBuilder.ToString();
+            cbModel.Text = "авантаження моделей...";
 
             try
             {
-                HttpResponseMessage response = await client.GetAsync(url);
+                var models = await _service.LoadModelsAsync(markId);
 
-                if (response.StatusCode == HttpStatusCode.BadRequest)
+                if (models != null)
                 {
-                    string errorBody = await response.Content.ReadAsStringAsync();
-                    if (errorBody.Contains("Not Enough Data"))
-                    {
-                        return null;
-                    }
+                    cbModel.Items.AddRange(models.Where(m => m.Id > 0 && !string.IsNullOrEmpty(m.Name)).ToArray());
+                    cbModel.Text = "Выбор модели";
+                    if (cbModel.Items.Count > 0)
+                        cbModel.SelectedIndex = 0;
                 }
-
-                response.EnsureSuccessStatusCode();
-
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                var result = JsonConvert.DeserializeObject<PriceStatistics>(responseBody);
-                return result;
+                else
+                {
+                    cbModel.Text = "Помилка завантаження моделей";
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при выполнении запроса: {ex.Message}", "Критическая ошибка сети/парсинга", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return null;
+                MessageBox.Show($"Помилка при завантаженні моделей: {ex.Message}", "Ошибка API", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                cbModel.Text = "Помилка завантаження моделей";
             }
         }
 
-        // --- МЕТОДЫ ДЛЯ ЗАГРУЗКИ ФОТО И АНАЛИЗА ЦЕНЫ ---
-
-        private async Task<AutoInfoData> GetAdvertDetails(int advertId)
-        {
-            string url = $"{BASE_URL}/info?api_key={API_KEY}&auto_id={advertId}";
-
-            try
-            {
-                HttpResponseMessage response = await client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                // ИСПРАВЛЕНО: Десериализуем как ОДИН ОБЪЕКТ (AutoInfoData), а не List<AutoInfoData>
-                var result = JsonConvert.DeserializeObject<AutoInfoData>(responseBody);
-                return result;
-            }
-            catch (JsonSerializationException jsonEx)
-            {
-                // Если API *иногда* возвращает массив, а иногда объект, мы должны обработать это
-                // (Но исходя из вашей отладки, он возвращает ОБЪЕКТ, который не смог стать List)
-                Debug.WriteLine($"JsonSerializationException в GetAdvertDetails: {jsonEx.Message}");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Общая ошибка в GetAdvertDetails: {ex.Message}");
-                return null;
-            }
-        }
+        // --- МЕТОДЫ ДЛЯ ЗАГРУЗКИ ФОТО И АНАЛИЗА ЦЕНЫ (UI Logic) ---
 
         private void DisplayAdvert(double avgPrice)
         {
             if (currentCarList == null || currentCarList.Count == 0 || currentAdvertIndex < 0 || currentAdvertIndex >= currentCarList.Count)
             {
                 pbCarPhoto.Image = null;
-                lblPhotoStats.Text = "Нет данных для отображения.";
+                lblPhotoStats.Text = "Немає данних для відображення.";
                 return;
             }
 
             CarEntry entry = currentCarList[currentAdvertIndex];
 
-            string priceStatus = AnalyzePrice(entry.Price, avgPrice);
+            // Анализ цены: делегирование в сервис
+            string priceStatus = _service.AnalyzePrice(entry.Price, avgPrice);
 
             lblPhotoStats.Text = $"ID: {entry.AdvertId}\r\nЦена: {entry.Price:N0} $\r\nСтатус: {priceStatus}\r\nОбъявление {currentAdvertIndex + 1} из {currentCarList.Count}";
 
-            _ = LoadPhoto(entry.AdvertId);
+            _ = LoadPhoto(entry.AdvertId, lblPhotoStats.Text);
         }
 
-        private async Task LoadPhoto(int advertId)
+        private async Task LoadPhoto(int advertId, string currentStatusText)
         {
             pbCarPhoto.Image = null;
 
-            AutoInfoData details = await GetAdvertDetails(advertId);
+            // Загрузка фото: делегирование в сервис
+            var (image, statusMessage) = await _service.GetAdvertPhotoAsync(advertId);
 
-            // Каскадный поиск ссылки: SeoLinkF (самая большая) -> SeoLinkB -> SeoLinkM
-            string photoUrl = details?.PhotoData?.SeoLinkF ??
-                              details?.PhotoData?.SeoLinkB ??
-                              details?.PhotoData?.SeoLinkM ?? "";
-
-            string currentStatusText = lblPhotoStats.Text;
-
-            if (string.IsNullOrEmpty(photoUrl))
+            if (image != null)
             {
-                lblPhotoStats.Text = currentStatusText + "\r\nФото недоступно (Ссылка отсутствует в API).";
-                return;
+                // UI: отображение фото
+                pbCarPhoto.Image = image;
             }
-
-            // ПРОВЕРКА: Если ссылка протоколо-относительная, делаем ее абсолютной
-            if (photoUrl.StartsWith("//"))
+            else if (!string.IsNullOrEmpty(statusMessage))
             {
-                photoUrl = "https:" + photoUrl;
-            }
-
-            // Загрузка
-            try
-            {
-                using (var stream = await client.GetStreamAsync(photoUrl))
-                {
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        await stream.CopyToAsync(ms);
-                        ms.Position = 0; // Rewind the stream
-
-                        Image originalImage = Image.FromStream(ms);
-                        pbCarPhoto.Image = new Bitmap(originalImage);
-                        originalImage.Dispose();
-                    }
-                }
-            }
-            catch (HttpRequestException ex) when (ex.Message.Contains("404"))
-            {
-                lblPhotoStats.Text = currentStatusText + $"\r\nФото удалено (404 Not Found).";
+                // UI: отображение ошибки
+                lblPhotoStats.Text = currentStatusText + $"\r\n{statusMessage}";
                 pbCarPhoto.Image = null;
-            }
-            catch (Exception ex)
-            {
-                lblPhotoStats.Text = currentStatusText + $"\r\nОшибка загрузки фото.";
-                pbCarPhoto.Image = null;
-                Debug.WriteLine($"Ошибка GDI+ или MemoryStream: {ex.ToString()}");
             }
         }
 
-        // --- МЕТОД: AnalyzePrice ---
-        private string AnalyzePrice(int currentPrice, double avgPrice)
-        {
-            if (avgPrice == 0) return "Нет статистики";
-
-            double deviation = (double)currentPrice / avgPrice;
-
-            if (deviation > 1.1)
-            {
-                return "❌ Завышена";
-            }
-            else if (deviation < 0.9)
-            {
-                return "✅ Занижена";
-            }
-            else
-            {
-                return "⚖️ Средняя";
-            }
-        }
-
-
-        // --- МЕТОД: UpdateChartAndGrid ---
+        // --- МЕТОД: UpdateChartAndGrid (Main Logic - Refactor to use service) ---
 
         private async void UpdateChartAndGrid()
         {
@@ -363,12 +221,22 @@ namespace AutoRiaAnalyzer
                 !(cbEngineVolumeFrom.SelectedItem is string volFromStr) ||
                 !(cbEngineVolumeTo.SelectedItem is string volToStr))
             {
-                lblStats.Text = "Заполните все фильтры.";
+                lblStats.Text = "Заповніть усі фільтри.";
                 return;
             }
 
-            double volFrom = double.Parse(volFromStr, CultureInfo.InvariantCulture);
-            double volTo = double.Parse(volToStr, CultureInfo.InvariantCulture);
+            double volFrom;
+            double volTo;
+            try
+            {
+                volFrom = double.Parse(volFromStr, CultureInfo.InvariantCulture);
+                volTo = double.Parse(volToStr, CultureInfo.InvariantCulture);
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Невірний формат об'єма двигуна.", "Помилка вводу", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             int markId = selectedBrand.Id;
             int modelId = selectedModel.Id;
@@ -379,23 +247,28 @@ namespace AutoRiaAnalyzer
 
             if (yearFrom > yearTo || volFrom > volTo)
             {
-                MessageBox.Show("Начальное значение фильтра не может быть больше конечного.", "Ошибка ввода", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Початкове значення фільтра не може бути більше кінцевого.", "Помилка вводу", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            lblStats.Text = "Загрузка данных с AUTO.RIA...";
+            lblStats.Text = "Завантаження данних з AUTO.RIA...";
 
-            PriceStatistics stats = await GetPricesFromApi(markId, modelId, yearFrom, yearTo, fuelId, volFrom, volTo);
+            // Получение статистики: делегирование в сервис
+            PriceStatistics stats = await _service.GetPricesFromApi(markId, modelId, yearFrom, yearTo, fuelId, volFrom, volTo);
 
             if (stats == null || stats.prices == null || stats.prices.Count == 0)
             {
-                lblStats.Text = $"Средняя цена:\r\nДанные по {brandName} {modelName} ({yearFrom}-{yearTo}, {fuelName}, {volFrom}-{volTo}л) не найдены.\r\n(ID модели: {modelId})";
+                // UI update logic
+                lblStats.Text = $"Середня ціна:\r\nДанні по {brandName} {modelName} ({yearFrom}-{yearTo}, {fuelName}, {volFrom}-{volTo}л) не найдены.\r\n(ID модели: {modelId})";
                 dataGridCars.DataSource = null;
                 chartCars.Series.Clear();
                 currentCarList.Clear();
+                pbCarPhoto.Image = null;
+                lblPhotoStats.Text = "Немає оголошень.";
                 return;
             }
 
+            // Data processing (Fill currentCarList)
             currentCarList.Clear();
             double avg = stats.arithmeticMean;
 
@@ -416,19 +289,19 @@ namespace AutoRiaAnalyzer
             currentCarList = currentCarList.OrderBy(e => e.Price).ToList();
             dataGridCars.DataSource = currentCarList;
 
-            // --- Обновление Chart ---
+            // --- Обновление Chart (UI Logic) ---
             chartCars.Series.Clear();
 
-            var pricesSeries = new Series("Цены объявлений")
+            var pricesSeries = new Series("Ціни оголошень")
             {
                 ChartType = SeriesChartType.Column,
                 Color = System.Drawing.Color.SteelBlue
             };
             int k = 1;
             foreach (var entry in currentCarList)
-                pricesSeries.Points.AddXY($"Объявление {k++}", entry.Price);
+                pricesSeries.Points.AddXY($"оголошення {k++}", entry.Price);
 
-            var avgSeries = new Series("Средняя цена")
+            var avgSeries = new Series("Середня ціна")
             {
                 ChartType = SeriesChartType.Line,
                 BorderWidth = 3,
@@ -441,15 +314,15 @@ namespace AutoRiaAnalyzer
             chartCars.Series.Add(pricesSeries);
             chartCars.Series.Add(avgSeries);
 
-            chartCars.ChartAreas[0].AxisX.Title = "Объявления (от дешевых к дорогим)";
+            chartCars.ChartAreas[0].AxisX.Title = "Оголошення (від дешевих до дорогих)";
             chartCars.ChartAreas[0].AxisY.Title = "Цена ($)";
 
-            // --- Сброс индикатора загрузки и установка статистики ---
+            // --- Сброс индикатора загрузки и установка статистики (UI Logic) ---
             double min = stats.prices.Min();
             double max = stats.prices.Max();
-            lblStats.Text = $"Средняя цена: {avg:F0} $\r\nДиапазон: {min:F0} – {max:F0} $\r\nКоличество объявлений: {stats.prices.Count}\r\nГрафик цен →";
+            lblStats.Text = $"Середня ціна: {avg:F0} $\r\nДіапазон: {min:F0} – {max:F0} $\r\nКількість оголошень: {stats.prices.Count}\r\nГрафік цін →";
 
-            // Автоматический выбор первого элемента
+            // Автоматический выбор первого элемента (UI Logic)
             if (currentCarList.Count > 0)
             {
                 dataGridCars.Rows[0].Selected = true;
@@ -458,12 +331,12 @@ namespace AutoRiaAnalyzer
             else
             {
                 pbCarPhoto.Image = null;
-                lblPhotoStats.Text = "Нет объявлений.";
+                lblPhotoStats.Text = "Немає оголошень.";
             }
         }
 
 
-        // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
+        // --- ОБРАБОТЧИКИ СОБЫТИЙ (UI Logic - Keep) ---
 
         private async void cmbBrand_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -514,6 +387,16 @@ namespace AutoRiaAnalyzer
         }
 
         private void chart1_Click(object sender, EventArgs e)
+        {
+            // Empty handler
+        }
+
+        private void lblStats_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cbFuelType_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }
