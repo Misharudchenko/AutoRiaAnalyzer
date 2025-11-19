@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend4 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.lblTitle = new System.Windows.Forms.Label();
             this.cbBrand = new System.Windows.Forms.ComboBox();
             this.cbModel = new System.Windows.Forms.ComboBox();
@@ -93,7 +93,7 @@
             this.btnLoad.ForeColor = System.Drawing.Color.White;
             this.btnLoad.Location = new System.Drawing.Point(200, 160);
             this.btnLoad.Name = "btnLoad";
-            this.btnLoad.Size = new System.Drawing.Size(121, 23);
+            this.btnLoad.Size = new System.Drawing.Size(121, 35);
             this.btnLoad.TabIndex = 8;
             this.btnLoad.Text = "Завантажити данні";
             this.btnLoad.UseVisualStyleBackColor = false;
@@ -108,12 +108,12 @@
             this.dataGridCars.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
             this.dataGridCars.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridCars.GridColor = System.Drawing.Color.LightGray;
-            this.dataGridCars.Location = new System.Drawing.Point(33, 195);
+            this.dataGridCars.Location = new System.Drawing.Point(33, 201);
             this.dataGridCars.Name = "dataGridCars";
             this.dataGridCars.ReadOnly = true;
             this.dataGridCars.RowHeadersVisible = false;
             this.dataGridCars.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridCars.Size = new System.Drawing.Size(477, 100);
+            this.dataGridCars.Size = new System.Drawing.Size(477, 172);
             this.dataGridCars.TabIndex = 9;
             this.dataGridCars.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridCars_CellClick);
             // 
@@ -123,7 +123,7 @@
             this.lblStats.BackColor = System.Drawing.Color.CornflowerBlue;
             this.lblStats.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.lblStats.ForeColor = System.Drawing.Color.DarkSlateBlue;
-            this.lblStats.Location = new System.Drawing.Point(343, 101);
+            this.lblStats.Location = new System.Drawing.Point(385, 101);
             this.lblStats.Name = "lblStats";
             this.lblStats.Size = new System.Drawing.Size(162, 63);
             this.lblStats.TabIndex = 10;
@@ -133,16 +133,16 @@
             // chartCars
             // 
             this.chartCars.BackColor = System.Drawing.Color.WhiteSmoke;
-            chartArea4.Name = "ChartArea1";
-            this.chartCars.ChartAreas.Add(chartArea4);
-            legend4.Name = "Legend1";
-            this.chartCars.Legends.Add(legend4);
-            this.chartCars.Location = new System.Drawing.Point(35, 305);
+            chartArea1.Name = "ChartArea1";
+            this.chartCars.ChartAreas.Add(chartArea1);
+            legend1.Name = "Legend1";
+            this.chartCars.Legends.Add(legend1);
+            this.chartCars.Location = new System.Drawing.Point(35, 386);
             this.chartCars.Name = "chartCars";
-            series4.ChartArea = "ChartArea1";
-            series4.Legend = "Legend1";
-            series4.Name = "Series1";
-            this.chartCars.Series.Add(series4);
+            series1.ChartArea = "ChartArea1";
+            series1.Legend = "Legend1";
+            series1.Name = "Series1";
+            this.chartCars.Series.Add(series1);
             this.chartCars.Size = new System.Drawing.Size(475, 289);
             this.chartCars.TabIndex = 11;
             this.chartCars.Text = "chart1";
@@ -150,7 +150,7 @@
             // cbYearFrom
             // 
             this.cbYearFrom.FormattingEnabled = true;
-            this.cbYearFrom.Location = new System.Drawing.Point(78, 104);
+            this.cbYearFrom.Location = new System.Drawing.Point(84, 104);
             this.cbYearFrom.Name = "cbYearFrom";
             this.cbYearFrom.Size = new System.Drawing.Size(88, 21);
             this.cbYearFrom.TabIndex = 3;
@@ -169,7 +169,7 @@
             // cbYearTo
             // 
             this.cbYearTo.FormattingEnabled = true;
-            this.cbYearTo.Location = new System.Drawing.Point(243, 104);
+            this.cbYearTo.Location = new System.Drawing.Point(250, 104);
             this.cbYearTo.Name = "cbYearTo";
             this.cbYearTo.Size = new System.Drawing.Size(89, 21);
             this.cbYearTo.TabIndex = 4;
@@ -196,7 +196,7 @@
             // cbEngineVolumeFrom
             // 
             this.cbEngineVolumeFrom.FormattingEnabled = true;
-            this.cbEngineVolumeFrom.Location = new System.Drawing.Point(92, 131);
+            this.cbEngineVolumeFrom.Location = new System.Drawing.Point(98, 131);
             this.cbEngineVolumeFrom.Name = "cbEngineVolumeFrom";
             this.cbEngineVolumeFrom.Size = new System.Drawing.Size(74, 21);
             this.cbEngineVolumeFrom.TabIndex = 5;
@@ -205,7 +205,7 @@
             // cbEngineVolumeTo
             // 
             this.cbEngineVolumeTo.FormattingEnabled = true;
-            this.cbEngineVolumeTo.Location = new System.Drawing.Point(259, 131);
+            this.cbEngineVolumeTo.Location = new System.Drawing.Point(261, 131);
             this.cbEngineVolumeTo.Name = "cbEngineVolumeTo";
             this.cbEngineVolumeTo.Size = new System.Drawing.Size(78, 21);
             this.cbEngineVolumeTo.TabIndex = 6;
@@ -233,7 +233,7 @@
             // 
             this.pbCarPhoto.BackColor = System.Drawing.Color.White;
             this.pbCarPhoto.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pbCarPhoto.Location = new System.Drawing.Point(585, 41);
+            this.pbCarPhoto.Location = new System.Drawing.Point(646, 41);
             this.pbCarPhoto.Name = "pbCarPhoto";
             this.pbCarPhoto.Size = new System.Drawing.Size(331, 217);
             this.pbCarPhoto.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -242,7 +242,7 @@
             // 
             // btnPrev
             // 
-            this.btnPrev.Location = new System.Drawing.Point(585, 264);
+            this.btnPrev.Location = new System.Drawing.Point(646, 264);
             this.btnPrev.Name = "btnPrev";
             this.btnPrev.Size = new System.Drawing.Size(141, 43);
             this.btnPrev.TabIndex = 13;
@@ -252,7 +252,7 @@
             // 
             // btnNext
             // 
-            this.btnNext.Location = new System.Drawing.Point(789, 264);
+            this.btnNext.Location = new System.Drawing.Point(850, 264);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(127, 43);
             this.btnNext.TabIndex = 14;
@@ -265,7 +265,7 @@
             this.lblPhotoStats.BackColor = System.Drawing.Color.PaleGoldenrod;
             this.lblPhotoStats.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblPhotoStats.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lblPhotoStats.Location = new System.Drawing.Point(689, 325);
+            this.lblPhotoStats.Location = new System.Drawing.Point(750, 325);
             this.lblPhotoStats.Name = "lblPhotoStats";
             this.lblPhotoStats.Size = new System.Drawing.Size(200, 95);
             this.lblPhotoStats.TabIndex = 15;
@@ -275,7 +275,7 @@
             // Form1
             // 
             this.BackColor = System.Drawing.Color.LightSteelBlue;
-            this.ClientSize = new System.Drawing.Size(917, 606);
+            this.ClientSize = new System.Drawing.Size(1010, 698);
             this.Controls.Add(this.lblPhotoStats);
             this.Controls.Add(this.btnNext);
             this.Controls.Add(this.btnPrev);

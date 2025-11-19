@@ -1,40 +1,180 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
+using System.Drawing; // Для кольорів та шрифтів
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Net;
-using System.IO;
 using System.Globalization;
-using System.Diagnostics;
 
 namespace AutoRiaAnalyzer
 {
     public partial class Form1 : Form
     {
         // --- СЕРВІС ---
-        // Використовуємо сервіс для всієї логіки API та обчислень
         private readonly AutoRiaService _service = new AutoRiaService();
 
-        // --- ПЕРЕМЕННЫЕ СОСТОЯНИЯ ---
+        // --- ЗМІННІ СТАНУ ---
         private List<CarEntry> currentCarList = new List<CarEntry>();
         private int currentAdvertIndex = -1;
+
+        // --- КОЛЬОРОВА ПАЛІТРА (High Contrast) ---
+        // Трохи темніший фон, щоб білі елементи "світилися"
+        private readonly Color BackgroundColor = Color.FromArgb(225, 230, 235);
+
+        // Основні кольори
+        private readonly Color PrimaryColor = Color.FromArgb(52, 152, 219);   // Синій
+        private readonly Color SecondaryColor = Color.FromArgb(44, 62, 80);  // Темно-синій
+        private readonly Color AccentColor = Color.FromArgb(39, 174, 96);    // Темно-зелений (більш контрастний)
+        private readonly Color TextColor = Color.FromArgb(44, 62, 80);       // Темний текст
+        private readonly Color BorderColor = Color.FromArgb(189, 195, 199);  // Колір рамок
 
         public Form1()
         {
             InitializeComponent();
-            cbEngineVolumeFrom.Text = "Об'єм від (л.)";
-            cbEngineVolumeTo.Text = "Об'єм до (л.)";
 
+            // 1. Спочатку налаштовуємо дизайн
+            ApplyContrastDesign();
+
+            // 2. Встановлюємо тексти
+            SetupTexts();
+
+            // 3. Запускаємо завантаження
             _ = LoadInitialDataAsync();
         }
+
+        // ==========================================
+        //         НАЛАШТУВАННЯ ДИЗАЙНУ
+        // ==========================================
+        private void ApplyContrastDesign()
+        {
+            this.BackColor = BackgroundColor;
+            this.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            this.Text = "AUTO.RIA Analyzer 2025";
+
+            // --- Заголовок ---
+            lblTitle.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
+            lblTitle.ForeColor = SecondaryColor;
+
+            // --- Кнопки ---
+            StyleButton(btnLoad, AccentColor);
+            StyleButton(btnPrev, PrimaryColor);
+            StyleButton(btnNext, PrimaryColor);
+
+            // --- Випадаючі списки (ComboBox) ---
+            // Додаємо візуальний акцент для підписів
+            foreach (Control c in this.Controls)
+            {
+                if (c is Label lbl && lbl != lblTitle && lbl != lblStats && lbl != lblPhotoStats)
+                {
+                    lbl.ForeColor = Color.FromArgb(80, 80, 80); // Темно-сірий для підписів
+                    lbl.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                }
+            }
+
+            // --- Таблиця ---
+            StyleDataGridView(dataGridCars);
+
+            // --- Графік ---
+            StyleChart(chartCars);
+
+            // --- Фото ---
+            pbCarPhoto.BackColor = Color.White;
+            pbCarPhoto.BorderStyle = BorderStyle.FixedSingle; // Рамка обов'язкова!
+
+            // --- Статистика (Інфо-панель) ---
+            lblStats.ForeColor = TextColor;
+            lblStats.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+
+            // Робимо панель статусу фото схожою на картку
+            lblPhotoStats.BackColor = Color.White;
+            lblPhotoStats.BorderStyle = BorderStyle.FixedSingle;
+            lblPhotoStats.ForeColor = Color.Black;
+            lblPhotoStats.Font = new Font("Segoe UI", 10F);
+        }
+
+        private void StyleButton(Button btn, Color color)
+        {
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 1;        // Додаємо тонку рамку
+            btn.FlatAppearance.BorderColor = ControlPaint.Dark(color, 0.2f); // Рамка трохи темніша за кнопку
+            btn.BackColor = color;
+            btn.ForeColor = Color.White;
+            btn.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btn.Cursor = Cursors.Hand;
+        }
+
+        private void StyleDataGridView(DataGridView dgv)
+        {
+            // Чітка рамка навколо таблиці
+            dgv.BorderStyle = BorderStyle.FixedSingle;
+            dgv.BackgroundColor = Color.White;
+
+            // Сітка всередині таблиці (GridLines)
+            dgv.CellBorderStyle = DataGridViewCellBorderStyle.Single;
+            dgv.GridColor = Color.FromArgb(230, 230, 230); // Світло-сіра сітка
+
+            // Заголовок
+            dgv.EnableHeadersVisualStyles = false;
+            dgv.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = SecondaryColor;
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgv.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            dgv.ColumnHeadersHeight = 40;
+
+            // Рядки
+            dgv.DefaultCellStyle.BackColor = Color.White;
+            dgv.DefaultCellStyle.ForeColor = TextColor;
+            dgv.DefaultCellStyle.SelectionBackColor = Color.FromArgb(214, 234, 248); // Ніжно-блакитний при виділенні
+            dgv.DefaultCellStyle.SelectionForeColor = Color.Black;
+            dgv.DefaultCellStyle.Font = new Font("Segoe UI", 10F);
+
+            dgv.RowHeadersVisible = false;
+        }
+
+        private void StyleChart(Chart chart)
+        {
+            // Робимо графік "карткою" з білим фоном
+            chart.BackColor = Color.White;
+            chart.BorderlineColor = BorderColor;
+            chart.BorderlineDashStyle = ChartDashStyle.Solid;
+            chart.BorderlineWidth = 1;
+
+            chart.ChartAreas[0].BackColor = Color.Transparent;
+            chart.ChartAreas[0].AxisX.MajorGrid.LineColor = Color.LightGray;
+            chart.ChartAreas[0].AxisX.MajorGrid.LineDashStyle = ChartDashStyle.Dot;
+            chart.ChartAreas[0].AxisY.MajorGrid.LineColor = Color.LightGray;
+            chart.ChartAreas[0].AxisY.MajorGrid.LineDashStyle = ChartDashStyle.Dot;
+
+            if (chart.Legends.Count > 0)
+            {
+                chart.Legends[0].BackColor = Color.Transparent;
+                chart.Legends[0].Font = new Font("Segoe UI", 9F);
+            }
+        }
+
+        private void SetupTexts()
+        {
+            lblTitle.Text = "Аналітика цін AUTO.RIA";
+            btnLoad.Text = "Оновити дані";
+            btnPrev.Text = "◀ Назад";
+            btnNext.Text = "Вперед ▶";
+            lblStats.Text = "Завантаження фільтрів...";
+
+            // Перевіряємо, чи це не Label, щоб не перейменовувати підписи
+            cbEngineVolumeFrom.Text = "Об'єм від";
+            cbEngineVolumeTo.Text = "Об'єм до";
+            cbBrand.Text = "Марка";
+            cbModel.Text = "Модель";
+            cbFuelType.Text = "Паливо";
+            cbYearFrom.Text = "Рік з";
+            cbYearTo.Text = "Рік по";
+        }
+
+        // ==========================================
+        //         ЛОГІКА ЗАВАНТАЖЕННЯ
+        // ==========================================
 
         private async Task LoadInitialDataAsync()
         {
@@ -42,174 +182,129 @@ namespace AutoRiaAnalyzer
             LoadFuelTypes();
             LoadEngineVolumes();
             await LoadBrandsAsync();
+            lblStats.Text = "Оберіть параметри та натисніть 'Оновити дані'";
         }
-
-        // --- МЕТОДЫ ДЛЯ ЗАПОЛНЕНИЯ COMBOBOX'ОВ (UI-Specific - Keep) ---
 
         private void LoadCarYears()
         {
             cbYearFrom.Items.Clear();
             cbYearTo.Items.Clear();
             int currentYear = DateTime.Now.Year;
-
-            for (int year = currentYear; year >= 1980; year--)
+            for (int year = currentYear; year >= 1990; year--)
             {
                 cbYearFrom.Items.Add(year);
                 cbYearTo.Items.Add(year);
             }
-
-            int defaultYearTo = currentYear;
-            int defaultYearFrom = currentYear - 1;
-
-            if (cbYearTo.Items.Contains(defaultYearTo))
-                cbYearTo.SelectedItem = defaultYearTo;
-            else if (cbYearTo.Items.Count > 0)
-                cbYearTo.SelectedIndex = 0;
-
-            if (cbYearFrom.Items.Contains(defaultYearFrom))
-                cbYearFrom.SelectedItem = defaultYearFrom;
-            else if (cbYearFrom.Items.Count > 0)
-                cbYearFrom.SelectedIndex = 0;
+            if (cbYearTo.Items.Count > 0) cbYearTo.SelectedIndex = 0;
+            if (cbYearFrom.Items.Count > 0) cbYearFrom.SelectedIndex = 0;
         }
 
         private void LoadFuelTypes()
         {
             var fuelTypes = new Dictionary<string, int>
             {
-                { "Бензин", 1 },
-                { "Дизель", 2 },
-                { "Газ", 3 },
-                { "Газ/Бензин", 4 },
-                { "Гібрид", 5 },
-                { "Єлектро", 6 }
+                { "Бензин", 1 }, { "Дизель", 2 }, { "Газ", 3 },
+                { "Газ/Бензин", 4 }, { "Гібрид", 5 }, { "Електро", 6 }
             };
-
             cbFuelType.Items.Clear();
             foreach (var kvp in fuelTypes)
-            {
                 cbFuelType.Items.Add(new ApiItem { Id = kvp.Value, Name = kvp.Key });
-            }
-            if (cbFuelType.Items.Count > 0)
-                cbFuelType.SelectedIndex = 0;
+            if (cbFuelType.Items.Count > 0) cbFuelType.SelectedIndex = 0;
         }
 
         private void LoadEngineVolumes()
         {
             cbEngineVolumeFrom.Items.Clear();
             cbEngineVolumeTo.Items.Clear();
-
-            for (double volume = 0.5; volume <= 7.0; volume += 0.1)
+            for (double volume = 0.5; volume <= 6.0; volume += 0.1)
             {
                 string volStr = volume.ToString("F1", CultureInfo.InvariantCulture);
                 cbEngineVolumeFrom.Items.Add(volStr);
                 cbEngineVolumeTo.Items.Add(volStr);
             }
-
             cbEngineVolumeFrom.SelectedItem = "1.0";
             cbEngineVolumeTo.SelectedItem = "3.0";
         }
 
-        // --- МЕТОДЫ API (Используют сервис) ---
-
         private async Task LoadBrandsAsync()
         {
             cbBrand.Items.Clear();
-            cbModel.Items.Clear();
-            cbBrand.Text = "Завантаження марок...";
-
+            cbBrand.Text = "Завантаження...";
             try
             {
                 var brands = await _service.LoadBrandsAsync();
-
                 if (brands != null)
                 {
                     cbBrand.Items.AddRange(brands.Where(b => b.Id > 0).ToArray());
-                    cbBrand.Text = "Вибір марки авто";
-                    if (cbBrand.Items.Count > 0)
-                        cbBrand.SelectedIndex = 0;
-                }
-                else
-                {
-                    cbBrand.Text = "Помилка завантаження марок";
+                    if (cbBrand.Items.Count > 0) cbBrand.SelectedIndex = 0;
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Помилка при завантаженні марок: {ex.Message}", "Помилка API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                cbBrand.Text = "Помилка завантаження марок";
-            }
+            catch { cbBrand.Text = "Помилка"; }
         }
 
         private async Task LoadModelsAsync(int markId)
         {
             cbModel.Items.Clear();
-            cbModel.Text = "авантаження моделей...";
-
+            cbModel.Text = "Завантаження...";
             try
             {
                 var models = await _service.LoadModelsAsync(markId);
-
                 if (models != null)
                 {
                     cbModel.Items.AddRange(models.Where(m => m.Id > 0 && !string.IsNullOrEmpty(m.Name)).ToArray());
-                    cbModel.Text = "Выбор модели";
-                    if (cbModel.Items.Count > 0)
-                        cbModel.SelectedIndex = 0;
-                }
-                else
-                {
-                    cbModel.Text = "Помилка завантаження моделей";
+                    if (cbModel.Items.Count > 0) cbModel.SelectedIndex = 0;
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Помилка при завантаженні моделей: {ex.Message}", "Ошибка API", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                cbModel.Text = "Помилка завантаження моделей";
-            }
+            catch { cbModel.Text = "Помилка"; }
         }
 
-        // --- МЕТОДЫ ДЛЯ ЗАГРУЗКИ ФОТО И АНАЛИЗА ЦЕНЫ (UI Logic) ---
+        // ==========================================
+        //         ОБРОБНИКИ ПОДІЙ
+        // ==========================================
 
-        private void DisplayAdvert(double avgPrice)
+        private void btnUpdate_Click(object sender, EventArgs e) => UpdateChartAndGrid();
+
+        private async void cmbBrand_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (currentCarList == null || currentCarList.Count == 0 || currentAdvertIndex < 0 || currentAdvertIndex >= currentCarList.Count)
-            {
-                pbCarPhoto.Image = null;
-                lblPhotoStats.Text = "Немає данних для відображення.";
-                return;
-            }
-
-            CarEntry entry = currentCarList[currentAdvertIndex];
-
-            // Анализ цены: делегирование в сервис
-            string priceStatus = _service.AnalyzePrice(entry.Price, avgPrice);
-
-            lblPhotoStats.Text = $"ID: {entry.AdvertId}\r\nЦена: {entry.Price:N0} $\r\nСтатус: {priceStatus}\r\nОбъявление {currentAdvertIndex + 1} из {currentCarList.Count}";
-
-            _ = LoadPhoto(entry.AdvertId, lblPhotoStats.Text);
+            if (cbBrand.SelectedItem is ApiItem selectedBrand)
+                await LoadModelsAsync(selectedBrand.Id);
         }
 
-        private async Task LoadPhoto(int advertId, string currentStatusText)
+        private void dataGridCars_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            pbCarPhoto.Image = null;
-
-            // Загрузка фото: делегирование в сервис
-            var (image, statusMessage) = await _service.GetAdvertPhotoAsync(advertId);
-
-            if (image != null)
+            if (e.RowIndex >= 0 && currentCarList.Count > e.RowIndex)
             {
-                // UI: отображение фото
-                pbCarPhoto.Image = image;
-            }
-            else if (!string.IsNullOrEmpty(statusMessage))
-            {
-                // UI: отображение ошибки
-                lblPhotoStats.Text = currentStatusText + $"\r\n{statusMessage}";
-                pbCarPhoto.Image = null;
+                currentAdvertIndex = e.RowIndex;
+                DisplayAdvert(currentCarList[currentAdvertIndex].AvgPrice);
             }
         }
 
-        // --- МЕТОД: UpdateChartAndGrid (Main Logic - Refactor to use service) ---
+        private void btnPrev_Click(object sender, EventArgs e)
+        {
+            if (currentCarList.Count > 0 && currentAdvertIndex > 0)
+            {
+                currentAdvertIndex--;
+                UpdateGridSelection();
+            }
+        }
+
+        private void btnNext_Click(object sender, EventArgs e)
+        {
+            if (currentCarList.Count > 0 && currentAdvertIndex < currentCarList.Count - 1)
+            {
+                currentAdvertIndex++;
+                UpdateGridSelection();
+            }
+        }
+
+        // Заглушки для дизайнера
+        private void lblStats_Click(object sender, EventArgs e) { }
+        private void cbFuelType_SelectedIndexChanged(object sender, EventArgs e) { }
+
+
+        // ==========================================
+        //         ЛОГІКА ВІДОБРАЖЕННЯ
+        // ==========================================
 
         private async void UpdateChartAndGrid()
         {
@@ -221,54 +316,36 @@ namespace AutoRiaAnalyzer
                 !(cbEngineVolumeFrom.SelectedItem is string volFromStr) ||
                 !(cbEngineVolumeTo.SelectedItem is string volToStr))
             {
-                lblStats.Text = "Заповніть усі фільтри.";
+                MessageBox.Show("Заповніть всі поля!", "Увага", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            double volFrom;
-            double volTo;
-            try
-            {
-                volFrom = double.Parse(volFromStr, CultureInfo.InvariantCulture);
-                volTo = double.Parse(volToStr, CultureInfo.InvariantCulture);
-            }
-            catch (FormatException)
-            {
-                MessageBox.Show("Невірний формат об'єма двигуна.", "Помилка вводу", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+            double volFrom = double.Parse(volFromStr, CultureInfo.InvariantCulture);
+            double volTo = double.Parse(volToStr, CultureInfo.InvariantCulture);
+
+            if (yearFrom > yearTo) { MessageBox.Show("Рік 'З' не може бути більшим за 'По'."); return; }
+
+            lblStats.Text = "⏳ Аналіз даних... Це може зайняти кілька секунд.";
+            lblStats.ForeColor = AccentColor;
+            btnLoad.Enabled = false;
+            this.Cursor = Cursors.WaitCursor; // Показуємо годинник
 
             int markId = selectedBrand.Id;
             int modelId = selectedModel.Id;
             int fuelId = selectedFuelType.Id;
-            string brandName = selectedBrand.Name;
-            string modelName = selectedModel.Name;
-            string fuelName = selectedFuelType.Name;
 
-            if (yearFrom > yearTo || volFrom > volTo)
-            {
-                MessageBox.Show("Початкове значення фільтра не може бути більше кінцевого.", "Помилка вводу", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            lblStats.Text = "Завантаження данних з AUTO.RIA...";
-
-            // Получение статистики: делегирование в сервис
             PriceStatistics stats = await _service.GetPricesFromApi(markId, modelId, yearFrom, yearTo, fuelId, volFrom, volTo);
+
+            btnLoad.Enabled = true;
+            this.Cursor = Cursors.Default;
+            lblStats.ForeColor = TextColor;
 
             if (stats == null || stats.prices == null || stats.prices.Count == 0)
             {
-                // UI update logic
-                lblStats.Text = $"Середня ціна:\r\nДанні по {brandName} {modelName} ({yearFrom}-{yearTo}, {fuelName}, {volFrom}-{volTo}л) не найдены.\r\n(ID модели: {modelId})";
-                dataGridCars.DataSource = null;
-                chartCars.Series.Clear();
-                currentCarList.Clear();
-                pbCarPhoto.Image = null;
-                lblPhotoStats.Text = "Немає оголошень.";
+                lblStats.Text = "На жаль, оголошень за такими параметрами не знайдено.";
                 return;
             }
 
-            // Data processing (Fill currentCarList)
             currentCarList.Clear();
             double avg = stats.arithmeticMean;
 
@@ -277,10 +354,10 @@ namespace AutoRiaAnalyzer
                 currentCarList.Add(new CarEntry
                 {
                     AdvertId = stats.classifieds[i],
-                    Brand = brandName,
-                    Model = modelName,
+                    Brand = selectedBrand.Name,
+                    Model = selectedModel.Name,
                     YearRange = $"{yearFrom}-{yearTo}",
-                    FuelType = fuelName,
+                    FuelType = selectedFuelType.Name,
                     Price = (int)Math.Round(stats.prices[i]),
                     AvgPrice = avg
                 });
@@ -289,116 +366,72 @@ namespace AutoRiaAnalyzer
             currentCarList = currentCarList.OrderBy(e => e.Price).ToList();
             dataGridCars.DataSource = currentCarList;
 
-            // --- Обновление Chart (UI Logic) ---
+            // Оновлення графіка
             chartCars.Series.Clear();
+            var pricesSeries = new Series("Ціни ($)") { ChartType = SeriesChartType.Column, Color = PrimaryColor };
+            var avgSeries = new Series("Середня") { ChartType = SeriesChartType.Line, BorderWidth = 2, Color = Color.Red };
 
-            var pricesSeries = new Series("Ціни оголошень")
-            {
-                ChartType = SeriesChartType.Column,
-                Color = System.Drawing.Color.SteelBlue
-            };
             int k = 1;
             foreach (var entry in currentCarList)
-                pricesSeries.Points.AddXY($"оголошення {k++}", entry.Price);
-
-            var avgSeries = new Series("Середня ціна")
             {
-                ChartType = SeriesChartType.Line,
-                BorderWidth = 3,
-                Color = System.Drawing.Color.Red,
-                MarkerStyle = MarkerStyle.None
-            };
-            for (int i = 0; i < pricesSeries.Points.Count; i++)
-                avgSeries.Points.AddXY(pricesSeries.Points[i].AxisLabel, avg);
-
+                pricesSeries.Points.AddXY(k++, entry.Price);
+                avgSeries.Points.AddXY(k - 1, avg);
+            }
             chartCars.Series.Add(pricesSeries);
             chartCars.Series.Add(avgSeries);
 
-            chartCars.ChartAreas[0].AxisX.Title = "Оголошення (від дешевих до дорогих)";
-            chartCars.ChartAreas[0].AxisY.Title = "Цена ($)";
-
-            // --- Сброс индикатора загрузки и установка статистики (UI Logic) ---
             double min = stats.prices.Min();
             double max = stats.prices.Max();
-            lblStats.Text = $"Середня ціна: {avg:F0} $\r\nДіапазон: {min:F0} – {max:F0} $\r\nКількість оголошень: {stats.prices.Count}\r\nГрафік цін →";
+            lblStats.Text = $"✅ Аналіз завершено!\nСередня ціна: {avg:N0} $\nДіапазон: {min:N0} $ — {max:N0} $\nВсього оголошень: {stats.prices.Count}";
 
-            // Автоматический выбор первого элемента (UI Logic)
             if (currentCarList.Count > 0)
             {
                 dataGridCars.Rows[0].Selected = true;
                 dataGridCars_CellClick(dataGridCars, new DataGridViewCellEventArgs(0, 0));
             }
-            else
+        }
+
+        private void UpdateGridSelection()
+        {
+            dataGridCars.ClearSelection();
+            dataGridCars.Rows[currentAdvertIndex].Selected = true;
+            dataGridCars.FirstDisplayedScrollingRowIndex = currentAdvertIndex;
+            DisplayAdvert(currentCarList[currentAdvertIndex].AvgPrice);
+        }
+
+        private void DisplayAdvert(double avgPrice)
+        {
+            if (currentCarList == null || currentCarList.Count == 0 || currentAdvertIndex < 0) return;
+
+            CarEntry entry = currentCarList[currentAdvertIndex];
+            string priceStatus = _service.AnalyzePrice(entry.Price, avgPrice);
+
+            // Використовуємо відступи для кращої читабельності
+            lblPhotoStats.Text = $"   Авто: {entry.Brand} {entry.Model}\n" +
+                                 $"   Рік: {entry.YearRange}\n" +
+                                 $"   Паливо: {entry.FuelType}\n" +
+                                 $"   -----------------------------\n" +
+                                 $"   Ціна: {entry.Price:N0} $\n" +
+                                 $"   Оцінка: {priceStatus}\n\n" +
+                                 $"   [Оголошення {currentAdvertIndex + 1} з {currentCarList.Count}]";
+
+            _ = LoadPhoto(entry.AdvertId);
+        }
+
+        private async Task LoadPhoto(int advertId)
+        {
+            pbCarPhoto.Image = null;
+            var (image, statusMessage) = await _service.GetAdvertPhotoAsync(advertId);
+
+            if (image != null)
             {
-                pbCarPhoto.Image = null;
-                lblPhotoStats.Text = "Немає оголошень.";
+                pbCarPhoto.SizeMode = PictureBoxSizeMode.Zoom;
+                pbCarPhoto.Image = image;
             }
-        }
-
-
-        // --- ОБРАБОТЧИКИ СОБЫТИЙ (UI Logic - Keep) ---
-
-        private async void cmbBrand_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (cbBrand.SelectedItem is ApiItem selectedBrand)
+            else if (!string.IsNullOrEmpty(statusMessage))
             {
-                await LoadModelsAsync(selectedBrand.Id);
+                lblPhotoStats.Text += $"\n\n   (Фото: {statusMessage})";
             }
-        }
-
-        private void btnUpdate_Click(object sender, EventArgs e)
-        {
-            UpdateChartAndGrid();
-        }
-
-        private void dataGridCars_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                currentAdvertIndex = e.RowIndex;
-                if (currentCarList.Count > currentAdvertIndex)
-                {
-                    CarEntry selectedEntry = currentCarList[currentAdvertIndex];
-                    DisplayAdvert(selectedEntry.AvgPrice);
-                }
-            }
-        }
-
-        private void btnPrev_Click(object sender, EventArgs e)
-        {
-            if (currentCarList.Count > 0 && currentAdvertIndex > 0)
-            {
-                currentAdvertIndex--;
-                dataGridCars.Rows[currentAdvertIndex].Selected = true;
-                dataGridCars.FirstDisplayedScrollingRowIndex = currentAdvertIndex;
-                DisplayAdvert(currentCarList[currentAdvertIndex].AvgPrice);
-            }
-        }
-
-        private void btnNext_Click(object sender, EventArgs e)
-        {
-            if (currentCarList.Count > 0 && currentAdvertIndex < currentCarList.Count - 1)
-            {
-                currentAdvertIndex++;
-                dataGridCars.Rows[currentAdvertIndex].Selected = true;
-                dataGridCars.FirstDisplayedScrollingRowIndex = currentAdvertIndex;
-                DisplayAdvert(currentCarList[currentAdvertIndex].AvgPrice);
-            }
-        }
-
-        private void chart1_Click(object sender, EventArgs e)
-        {
-            // Empty handler
-        }
-
-        private void lblStats_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void cbFuelType_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

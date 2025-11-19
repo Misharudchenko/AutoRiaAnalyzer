@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -15,7 +14,6 @@ namespace AutoRiaAnalyzer
 {
     /// <summary>
     /// Сервісний клас для роботи з API AUTO.RIA та бізнес-логікою.
-    /// Відокремлює логіку даних від UI (Form1).
     /// </summary>
     public class AutoRiaService
     {
@@ -40,7 +38,7 @@ namespace AutoRiaAnalyzer
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Помилка при завантаженні данних с API: {ex.Message}");
+                Debug.WriteLine($"Помилка при завантаженні даних з API: {ex.Message}");
                 return default;
             }
         }
@@ -59,25 +57,19 @@ namespace AutoRiaAnalyzer
             return await FetchApiData<List<ApiItem>>(url);
         }
 
-        // --- Получение статистики цін (/average_price) ---
+        // --- Отримання статистики цін (/average_price) ---
 
         public async Task<PriceStatistics> GetPricesFromApi(int markId, int modelId, int yearFrom, int yearTo, int fuelId, double volFrom, double volTo)
         {
             StringBuilder urlBuilder = new StringBuilder();
             urlBuilder.Append($"{BASE_URL}/average_price?api_key={API_KEY}");
-
             urlBuilder.Append($"&marka_id={markId}");
             urlBuilder.Append($"&model_id={modelId}");
-
             urlBuilder.Append($"&yers={yearFrom}");
             urlBuilder.Append($"&yers={yearTo}");
-
             urlBuilder.Append($"&fuel_id={fuelId}");
-
-            // Використовуємо CultureInfo.InvariantCulture для API-запитів
             urlBuilder.Append($"&engineVolumeFrom={volFrom.ToString(CultureInfo.InvariantCulture)}");
             urlBuilder.Append($"&engineVolumeTo={volTo.ToString(CultureInfo.InvariantCulture)}");
-
             urlBuilder.Append($"&with_photo=1");
 
             string url = urlBuilder.ToString();
@@ -91,16 +83,13 @@ namespace AutoRiaAnalyzer
                     string errorBody = await response.Content.ReadAsStringAsync();
                     if (errorBody.Contains("Not Enough Data"))
                     {
-                        return null; // Недостатньо даних для статистики
+                        return null;
                     }
                 }
 
                 response.EnsureSuccessStatusCode();
-
                 string responseBody = await response.Content.ReadAsStringAsync();
-
-                var result = JsonConvert.DeserializeObject<PriceStatistics>(responseBody);
-                return result;
+                return JsonConvert.DeserializeObject<PriceStatistics>(responseBody);
             }
             catch (Exception ex)
             {
@@ -109,7 +98,7 @@ namespace AutoRiaAnalyzer
             }
         }
 
-        // --- Получение деталей оголошення (/info) ---
+        // --- Отримання деталей оголошення (/info) ---
 
         public async Task<AutoInfoData> GetAdvertDetails(int advertId)
         {
@@ -120,9 +109,7 @@ namespace AutoRiaAnalyzer
                 HttpResponseMessage response = await client.GetAsync(url);
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
-
-                var result = JsonConvert.DeserializeObject<AutoInfoData>(responseBody);
-                return result;
+                return JsonConvert.DeserializeObject<AutoInfoData>(responseBody);
             }
             catch (Exception ex)
             {
@@ -133,11 +120,6 @@ namespace AutoRiaAnalyzer
 
         // --- Завантаження фото ---
 
-        /// <summary>
-        /// Завантажує фотографію за ID оголошення.
-        /// </summary>
-        /// <param name="advertId">ID оголошення.</param>
-        /// <returns>Кортеж з об'єктом Image (або null) та повідомленням про статус (або null).</returns>
         public async Task<(Image Image, string StatusMessage)> GetAdvertPhotoAsync(int advertId)
         {
             AutoInfoData details = await GetAdvertDetails(advertId);
@@ -166,7 +148,6 @@ namespace AutoRiaAnalyzer
                         ms.Position = 0;
 
                         Image originalImage = Image.FromStream(ms);
-                        // Повертаємо Bitmap, щоб дозволити закрити MemoryStream
                         return (new Bitmap(originalImage), null);
                     }
                 }
@@ -182,11 +163,8 @@ namespace AutoRiaAnalyzer
             }
         }
 
-        // --- Бізнес-логіка ---
+        // --- Бізнес-логіка (Аналіз ціни) ---
 
-        /// <summary>
-        /// Аналізує ціну оголошення відносно середньої.
-        /// </summary>
         public string AnalyzePrice(int currentPrice, double avgPrice)
         {
             if (avgPrice == 0) return "Немає статистики";
