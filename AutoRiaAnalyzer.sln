@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36603.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoRiaAnalyzer", "AutoRiaAnalyzer.csproj", "{5562BE70-AF78-47DB-AA85-3A0124A2BFD6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoRiaAnalyzer.Core", "..\AutoRiaAnalyzer.Core\AutoRiaAnalyzer.Core.csproj", "{05AB54DC-C123-4B70-BE86-C40DDF29BBE4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoRiaAnalyzer.Core", "AutoRiaAnalyzer.Core\AutoRiaAnalyzer.Core.csproj", "{05AB54DC-C123-4B70-BE86-C40DDF29BBE4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

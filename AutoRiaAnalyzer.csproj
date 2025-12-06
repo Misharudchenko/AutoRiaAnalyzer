@@ -87,7 +87,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AutoRiaAnalyzer.Core\AutoRiaAnalyzer.Core.csproj">
+    <ProjectReference Include="AutoRiaAnalyzer.Core\AutoRiaAnalyzer.Core.csproj">
       <Project>{05ab54dc-c123-4b70-be86-c40ddf29bbe4}</Project>
       <Name>AutoRiaAnalyzer.Core</Name>
     </ProjectReference>
