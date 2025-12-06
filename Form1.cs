@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Globalization;
+using AutoRiaAnalyzer.Core;
 
 namespace AutoRiaAnalyzer
 {
@@ -432,6 +433,11 @@ namespace AutoRiaAnalyzer
             {
                 lblPhotoStats.Text += $"\n\n   (Фото: {statusMessage})";
             }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -80,7 +80,7 @@
             // cbModel
             // 
             this.cbModel.FormattingEnabled = true;
-            this.cbModel.Location = new System.Drawing.Point(200, 78);
+            this.cbModel.Location = new System.Drawing.Point(287, 78);
             this.cbModel.Name = "cbModel";
             this.cbModel.Size = new System.Drawing.Size(121, 21);
             this.cbModel.TabIndex = 2;
@@ -91,7 +91,7 @@
             this.btnLoad.BackColor = System.Drawing.Color.CornflowerBlue;
             this.btnLoad.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLoad.ForeColor = System.Drawing.Color.White;
-            this.btnLoad.Location = new System.Drawing.Point(200, 160);
+            this.btnLoad.Location = new System.Drawing.Point(287, 160);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(121, 35);
             this.btnLoad.TabIndex = 8;
@@ -123,7 +123,7 @@
             this.lblStats.BackColor = System.Drawing.Color.CornflowerBlue;
             this.lblStats.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.lblStats.ForeColor = System.Drawing.Color.DarkSlateBlue;
-            this.lblStats.Location = new System.Drawing.Point(385, 101);
+            this.lblStats.Location = new System.Drawing.Point(550, 487);
             this.lblStats.Name = "lblStats";
             this.lblStats.Size = new System.Drawing.Size(162, 63);
             this.lblStats.TabIndex = 10;
@@ -169,7 +169,7 @@
             // cbYearTo
             // 
             this.cbYearTo.FormattingEnabled = true;
-            this.cbYearTo.Location = new System.Drawing.Point(250, 104);
+            this.cbYearTo.Location = new System.Drawing.Point(337, 104);
             this.cbYearTo.Name = "cbYearTo";
             this.cbYearTo.Size = new System.Drawing.Size(89, 21);
             this.cbYearTo.TabIndex = 4;
@@ -178,7 +178,7 @@
             // lblYearTo
             // 
             this.lblYearTo.AutoSize = true;
-            this.lblYearTo.Location = new System.Drawing.Point(197, 107);
+            this.lblYearTo.Location = new System.Drawing.Point(284, 107);
             this.lblYearTo.Name = "lblYearTo";
             this.lblYearTo.Size = new System.Drawing.Size(40, 13);
             this.lblYearTo.TabIndex = 10;
@@ -205,7 +205,7 @@
             // cbEngineVolumeTo
             // 
             this.cbEngineVolumeTo.FormattingEnabled = true;
-            this.cbEngineVolumeTo.Location = new System.Drawing.Point(261, 131);
+            this.cbEngineVolumeTo.Location = new System.Drawing.Point(348, 131);
             this.cbEngineVolumeTo.Name = "cbEngineVolumeTo";
             this.cbEngineVolumeTo.Size = new System.Drawing.Size(78, 21);
             this.cbEngineVolumeTo.TabIndex = 6;
@@ -223,7 +223,7 @@
             // lblEngineTo
             // 
             this.lblEngineTo.AutoSize = true;
-            this.lblEngineTo.Location = new System.Drawing.Point(197, 134);
+            this.lblEngineTo.Location = new System.Drawing.Point(284, 134);
             this.lblEngineTo.Name = "lblEngineTo";
             this.lblEngineTo.Size = new System.Drawing.Size(55, 13);
             this.lblEngineTo.TabIndex = 12;
@@ -233,16 +233,16 @@
             // 
             this.pbCarPhoto.BackColor = System.Drawing.Color.White;
             this.pbCarPhoto.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pbCarPhoto.Location = new System.Drawing.Point(646, 41);
+            this.pbCarPhoto.Location = new System.Drawing.Point(548, 52);
             this.pbCarPhoto.Name = "pbCarPhoto";
-            this.pbCarPhoto.Size = new System.Drawing.Size(331, 217);
+            this.pbCarPhoto.Size = new System.Drawing.Size(274, 186);
             this.pbCarPhoto.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbCarPhoto.TabIndex = 12;
             this.pbCarPhoto.TabStop = false;
             // 
             // btnPrev
             // 
-            this.btnPrev.Location = new System.Drawing.Point(646, 264);
+            this.btnPrev.Location = new System.Drawing.Point(548, 264);
             this.btnPrev.Name = "btnPrev";
             this.btnPrev.Size = new System.Drawing.Size(141, 43);
             this.btnPrev.TabIndex = 13;
@@ -252,7 +252,7 @@
             // 
             // btnNext
             // 
-            this.btnNext.Location = new System.Drawing.Point(850, 264);
+            this.btnNext.Location = new System.Drawing.Point(695, 264);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(127, 43);
             this.btnNext.TabIndex = 14;
@@ -265,7 +265,7 @@
             this.lblPhotoStats.BackColor = System.Drawing.Color.PaleGoldenrod;
             this.lblPhotoStats.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.lblPhotoStats.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.lblPhotoStats.Location = new System.Drawing.Point(750, 325);
+            this.lblPhotoStats.Location = new System.Drawing.Point(548, 342);
             this.lblPhotoStats.Name = "lblPhotoStats";
             this.lblPhotoStats.Size = new System.Drawing.Size(200, 95);
             this.lblPhotoStats.TabIndex = 15;
@@ -275,7 +275,7 @@
             // Form1
             // 
             this.BackColor = System.Drawing.Color.LightSteelBlue;
-            this.ClientSize = new System.Drawing.Size(1010, 698);
+            this.ClientSize = new System.Drawing.Size(835, 698);
             this.Controls.Add(this.lblPhotoStats);
             this.Controls.Add(this.btnNext);
             this.Controls.Add(this.btnPrev);
@@ -298,6 +298,7 @@
             this.Controls.Add(this.lblTitle);
             this.Name = "Form1";
             this.Text = "Price";
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridCars)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartCars)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbCarPhoto)).EndInit();
